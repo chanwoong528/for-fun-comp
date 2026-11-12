@@ -75,6 +75,7 @@ const resolvePlayerBulletHit = (world: World, bullet: PlayerBullet): boolean => 
 
 const updatePlayerBullets = (world: World, dt: number) => {
   world.playerBullets = world.playerBullets.filter((bullet) => {
+    bullet.age += dt;
     bullet.x += bullet.vx * dt;
     bullet.y += bullet.vy * dt;
 

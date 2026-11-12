@@ -141,7 +141,7 @@ export const STAGES: StageDefinition[] = [
       [2700, 'ticket'],
     ]),
     createBoss: (arenaLeft) => new DivisionHeadBoss(arenaLeft),
-    bossIntroLine: '의견은 잘 들었습니다. 그래도 저는 제 갈 길을 갑니다.',
+    bossIntroLine: '의견은 잘 들었습니다. 일단 진행 한번 해봤으면 좋겠어요.',
     bossDefeatLine: '…좋습니다. 이번에는 창우씨 방향으로 가보죠.',
     clearStampText: '방향 수용',
   },

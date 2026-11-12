@@ -10,7 +10,8 @@ import { drawText } from './text';
 const SHAKE_STRENGTH = 6;
 const FLASH_MAX_ALPHA = 0.7;
 const FLASH_SECONDS = 0.35;
-const BULLET_TRAIL_LENGTH = 26;
+const KEYCAP_SPIN_SPEED = 16;
+const KEYCAP_GHOST_SECONDS = 0.014;
 const DOCUMENT_SPIN_SPEED = 5;
 const WAVE_HEART_COUNT = 3;
 
@@ -45,28 +46,30 @@ const drawPlatforms = (ctx: CanvasRenderingContext2D, world: World) => {
   });
 };
 
-const drawPlayerBullet = (ctx: CanvasRenderingContext2D, bullet: PlayerBullet) => {
-  const centerX = bullet.x + bullet.w / 2;
-  const centerY = bullet.y + bullet.h / 2;
-  const isVertical = bullet.vx === 0;
-  const direction = isVertical ? -1 : Math.sign(bullet.vx);
+const drawKeycap = (ctx: CanvasRenderingContext2D, keycap: PlayerBullet) => {
+  const centerX = keycap.x + keycap.w / 2;
+  const centerY = keycap.y + keycap.h / 2;
+  const half = keycap.w / 2;
+
+  // 날아온 방향으로 옅은 잔상 두 개
+  ctx.fillStyle = 'rgba(244, 241, 234, 0.22)';
+  [1, 2].forEach((step) => {
+    const ghostX = centerX - keycap.vx * KEYCAP_GHOST_SECONDS * step;
+    const ghostY = centerY - keycap.vy * KEYCAP_GHOST_SECONDS * step;
+    roundedRect(ctx, ghostX - half, ghostY - half, keycap.w, keycap.h, 3);
+    ctx.fill();
+  });
 
   ctx.save();
   ctx.translate(centerX, centerY);
-  if (isVertical) ctx.rotate(-Math.PI / 2);
-  else ctx.scale(direction, 1);
-
-  // 꼬리 잔상 → 빛 번짐 → 탄두
-  const trail = ctx.createLinearGradient(-BULLET_TRAIL_LENGTH, 0, 0, 0);
-  trail.addColorStop(0, 'rgba(255, 224, 102, 0)');
-  trail.addColorStop(1, 'rgba(255, 224, 102, 0.7)');
-  ctx.fillStyle = trail;
-  ctx.fillRect(-BULLET_TRAIL_LENGTH, -2.5, BULLET_TRAIL_LENGTH, 5);
-  drawGlow(ctx, 0, 0, 16, '255, 224, 102', 0.7);
-  roundedRect(ctx, -8, -3.5, 16, 7, 3.5);
-  ctx.fillStyle = '#fff7c2';
+  ctx.rotate(keycap.age * KEYCAP_SPIN_SPEED);
+  useOutline(ctx, 1.8);
+  roundedRect(ctx, -half, -half, keycap.w, keycap.h, 3.5);
+  fillAndStroke(ctx, '#c9c4b8');
+  roundedRect(ctx, -half + 1.5, -half + 1, keycap.w - 3, keycap.h - 4, 2.5);
+  ctx.fillStyle = '#f7f4ec';
   ctx.fill();
-
+  drawText(ctx, keycap.label, 0, -0.5, { size: keycap.label.length > 1 ? 7 : 9, color: '#3a3648', align: 'center' });
   ctx.restore();
 };
 
@@ -208,7 +211,7 @@ export const renderWorld = (ctx: CanvasRenderingContext2D, world: World) => {
   world.enemies.forEach((enemy) => drawEnemy(ctx, enemy, playerCenterX < enemy.x + enemy.w / 2 ? -1 : 1));
   world.boss?.draw(ctx, world);
   drawPlayer(ctx, world.player, world.time);
-  world.playerBullets.forEach((bullet) => drawPlayerBullet(ctx, bullet));
+  world.playerBullets.forEach((keycap) => drawKeycap(ctx, keycap));
   world.enemyBullets.forEach((bullet) => drawEnemyBullet(ctx, bullet));
   drawEffects(ctx, world);
 

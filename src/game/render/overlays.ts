@@ -11,7 +11,7 @@ import { drawNameTag, drawText, FONT_FAMILY, TITLE_FONT_FAMILY } from './text';
 const CENTER_X = VIEW_WIDTH / 2;
 
 const CAST: Array<{ label: string; look: PersonLook; arm: ArmPose }> = [
-  { label: PLAYER_NAME, look: PLAYER_LOOK, arm: 'aimForward' },
+  { label: PLAYER_NAME, look: PLAYER_LOOK, arm: 'throwForward' },
   { label: '우종석 팀장', look: TEAM_LEAD_LOOK, arm: 'gesture' },
   { label: '임태희 부문장', look: DIVISION_HEAD_LOOK, arm: 'phone' },
   { label: '곽동훈 전무', look: EXECUTIVE_LOOK, arm: 'rest' },
@@ -29,7 +29,7 @@ const KEY_HINTS: Array<[string, string]> = [
   ['←→', '이동'],
   ['↑', '위로 조준'],
   ['Space', '점프'],
-  ['Z', '발사'],
+  ['Z', '키캡 던지기'],
   ['X', '핫픽스 배포'],
 ];
 const KEY_HINT_SIZE = 15;

@@ -62,7 +62,9 @@ const DOCUMENT_SPEED = 250;
 const DOCUMENT_WIDTH = 22;
 const DOCUMENT_HEIGHT = 28;
 
-const DEFLECT_LINES = ['의견 감사합니다', '참고하겠습니다', '그래도 갑니다'] as const;
+// 입버릇인 첫 대사가 더 자주 나오도록 두 번 넣는다
+const CATCHPHRASE = '일단 진행 한번 해봤으면 좋겠어요';
+const DEFLECT_LINES = [CATCHPHRASE, CATCHPHRASE, '의견 감사합니다', '참고하겠습니다'] as const;
 const DEFLECT_TEXT_INTERVAL_SECONDS = 0.7;
 const PAUSE_LINE = '(메일 확인 중…)';
 const MARCH_LABEL = '마이웨이';

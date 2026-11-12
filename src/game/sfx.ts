@@ -32,7 +32,8 @@ const playTone = ({ frequency, endFrequency, seconds, wave, volume }: Tone) => {
 };
 
 export const sfx = {
-  shoot: () => playTone({ frequency: 880, endFrequency: 440, seconds: 0.06, wave: 'square', volume: 0.03 }),
+  // 키캡이 '딸깍' 하고 튕겨 나가는 소리
+  shoot: () => playTone({ frequency: 520, endFrequency: 300, seconds: 0.045, wave: 'triangle', volume: 0.05 }),
   jump: () => playTone({ frequency: 300, endFrequency: 600, seconds: 0.12, wave: 'square', volume: 0.04 }),
   enemyDown: () => playTone({ frequency: 220, endFrequency: 60, seconds: 0.18, wave: 'sawtooth', volume: 0.06 }),
   deflect: () => playTone({ frequency: 1200, endFrequency: 900, seconds: 0.05, wave: 'triangle', volume: 0.04 }),

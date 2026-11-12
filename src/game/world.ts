@@ -5,7 +5,8 @@ import { createPlayer, type Player } from './domains/player/player';
 import { STAGES, type SpawnPoint, type StageDefinition } from './stages';
 import type { Rect } from './types';
 
-export type PlayerBullet = Rect & { vx: number; vy: number };
+// 플레이어가 던지는 키캡
+export type PlayerBullet = Rect & { vx: number; vy: number; label: string; age: number };
 
 export type EnemyBulletLook = 'alert' | 'bubble' | 'wave' | 'document';
 export type EnemyBulletEffect = 'damage' | 'persuade';

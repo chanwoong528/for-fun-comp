@@ -5,7 +5,7 @@ import { drawNameTag } from '../../render/text';
 import { sfx } from '../../sfx';
 import type { Direction, Rect } from '../../types';
 import type { World } from '../../world';
-import { addFloatingText, centerOf, clamp, spawnBurst } from '../../worldActions';
+import { addFloatingText, centerOf, clamp, pickRandom, spawnBurst } from '../../worldActions';
 import { damageEnemy } from '../enemies/enemies';
 
 export type Player = Rect & {
@@ -49,9 +49,9 @@ const PLAYER_START_HOTFIX_COUNT = 2;
 const WALK_ANIMATION_SPEED = 14;
 
 const SHOOT_INTERVAL_SECONDS = 0.13;
-const BULLET_SPEED = 720;
-const BULLET_LENGTH = 16;
-const BULLET_THICKNESS = 6;
+const KEYCAP_SPEED = 680;
+const KEYCAP_SIZE = 14;
+const KEYCAP_LABELS = ['C', 'V', 'Z', 'S', 'F5'] as const;
 
 const HOTFIX_ENEMY_DAMAGE = 5;
 const HOTFIX_BOSS_DAMAGE = 12;
@@ -113,31 +113,37 @@ const movePlayer = (world: World, dt: number) => {
   player.vy = 0;
 };
 
-const fireBullet = (world: World) => {
+// 기본 공격: 키보드에서 키캡을 뽑아 던진다
+const throwKeycap = (world: World) => {
   const { player } = world;
   const center = centerOf(player);
+  const label = pickRandom(KEYCAP_LABELS);
   player.shootCooldown = SHOOT_INTERVAL_SECONDS;
   sfx.shoot();
 
   if (player.isAimingUp) {
     world.playerBullets.push({
-      x: center.x - BULLET_THICKNESS / 2,
-      y: player.y - BULLET_LENGTH,
-      w: BULLET_THICKNESS,
-      h: BULLET_LENGTH,
+      x: center.x - KEYCAP_SIZE / 2,
+      y: player.y - KEYCAP_SIZE,
+      w: KEYCAP_SIZE,
+      h: KEYCAP_SIZE,
       vx: 0,
-      vy: -BULLET_SPEED,
+      vy: -KEYCAP_SPEED,
+      label,
+      age: 0,
     });
     return;
   }
 
   world.playerBullets.push({
-    x: player.facing === 1 ? player.x + player.w : player.x - BULLET_LENGTH,
-    y: player.y + player.h * 0.45,
-    w: BULLET_LENGTH,
-    h: BULLET_THICKNESS,
-    vx: player.facing * BULLET_SPEED,
+    x: player.facing === 1 ? player.x + player.w : player.x - KEYCAP_SIZE,
+    y: player.y + player.h * 0.42 - KEYCAP_SIZE / 2,
+    w: KEYCAP_SIZE,
+    h: KEYCAP_SIZE,
+    vx: player.facing * KEYCAP_SPEED,
     vy: 0,
+    label,
+    age: 0,
   });
 };
 
@@ -179,7 +185,7 @@ export const updatePlayer = (world: World, input: Input, dt: number) => {
 
   movePlayer(world, dt);
 
-  if (input.isDown('shoot') && player.shootCooldown === 0) fireBullet(world);
+  if (input.isDown('shoot') && player.shootCooldown === 0) throwKeycap(world);
   if (input.wasPressed('special') && player.hotfixCount > 0) deployHotfix(world);
 };
 
@@ -206,8 +212,8 @@ export const drawPlayer = (ctx: CanvasRenderingContext2D, player: Player, time: 
     time,
     isWalking: player.vx !== 0 && player.isOnGround,
     isAirborne: !player.isOnGround,
-    arm: player.isAimingUp ? 'aimUp' : 'aimForward',
-    muzzleFlash: player.shootCooldown / SHOOT_INTERVAL_SECONDS,
+    arm: player.isAimingUp ? 'throwUp' : 'throwForward',
+    throwProgress: player.shootCooldown / SHOOT_INTERVAL_SECONDS,
   });
   drawNameTag(ctx, PLAYER_NAME, player.x + player.w / 2, player.y - 16);
 };

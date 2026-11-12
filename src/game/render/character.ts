@@ -1,10 +1,10 @@
 import type { Direction, Point, Rect } from '../types';
-import { drawGlow, ellipse, fillAndStroke, OUTLINE_COLOR, roundedRect } from './shapes';
+import { ellipse, fillAndStroke, OUTLINE_COLOR, roundedRect } from './shapes';
 
 export type HairStyle = 'short' | 'parted' | 'slick' | 'thin';
 export type Expression = 'determined' | 'smile' | 'stern' | 'frown';
 export type Outfit = 'hoodie' | 'knit' | 'suit';
-export type ArmPose = 'rest' | 'aimForward' | 'aimUp' | 'gesture' | 'phone';
+export type ArmPose = 'rest' | 'throwForward' | 'throwUp' | 'gesture' | 'phone';
 
 export type PersonLook = {
   skin: string;
@@ -30,8 +30,8 @@ type PersonPose = Rect & {
   isWalking?: boolean;
   isAirborne?: boolean;
   arm?: ArmPose;
-  // 0~1, 총구 섬광 세기
-  muzzleFlash?: number;
+  // 1 = 방금 던짐 → 0 = 다음 키캡을 쥐고 준비 완료
+  throwProgress?: number;
 };
 
 // 캐릭터는 "발끝이 원점, 키 100, 오른쪽을 바라보는" 설계 좌표계에서 그린 뒤 크기와 방향을 맞춘다
@@ -55,7 +55,11 @@ const STEP_LIFT = 6;
 
 const BLINK_PERIOD_SECONDS = 3.2;
 const BLINK_SECONDS = 0.12;
-const MUZZLE_FLASH_THRESHOLD = 0.45;
+const THROW_READY_HAND: Point = { x: 9, y: -52 };
+const THROW_FORWARD_HAND: Point = { x: 29, y: -45 };
+const THROW_UP_HAND: Point = { x: 13, y: -76 };
+const THROW_BACK_HAND: Point = { x: -12, y: -33 };
+const KEYCAP_VISIBLE_PROGRESS = 0.35;
 
 type Limbs = { back: Point; front: Point };
 
@@ -89,12 +93,18 @@ const getFeet = (isWalking: boolean, isAirborne: boolean, walkPhase: number): Li
   };
 };
 
-const getHands = (arm: ArmPose, isWalking: boolean, walkPhase: number): Limbs => {
+const mixPoint = (from: Point, to: Point, ratio: number): Point => ({
+  x: from.x + (to.x - from.x) * ratio,
+  y: from.y + (to.y - from.y) * ratio,
+});
+
+const getHands = (arm: ArmPose, isWalking: boolean, walkPhase: number, throwProgress: number): Limbs => {
   switch (arm) {
-    case 'aimForward':
-      return { back: { x: 19, y: -39 }, front: { x: 25, y: -40 } };
-    case 'aimUp':
-      return { back: { x: 7, y: -62 }, front: { x: 12, y: -66 } };
+    // 던진 직후에는 팔을 뻗고, 준비 자세로 돌아오며 다음 키캡을 쥔다
+    case 'throwForward':
+      return { back: THROW_BACK_HAND, front: mixPoint(THROW_READY_HAND, THROW_FORWARD_HAND, throwProgress) };
+    case 'throwUp':
+      return { back: THROW_BACK_HAND, front: mixPoint(THROW_READY_HAND, THROW_UP_HAND, throwProgress) };
     case 'gesture':
       return { back: { x: -14, y: -28 }, front: { x: 27, y: -53 } };
     case 'phone':
@@ -311,27 +321,23 @@ const drawHair = (ctx: CanvasRenderingContext2D, look: PersonLook, paint: (color
   useOutline(ctx);
 };
 
-const drawKeyboardBlaster = (ctx: CanvasRenderingContext2D, hand: Point, isAimingUp: boolean, flash: number) => {
+// 옆구리에 낀 키보드 (키캡 탄창)
+const drawHeldKeyboard = (ctx: CanvasRenderingContext2D, hand: Point) => {
   ctx.save();
   ctx.translate(hand.x, hand.y);
-  if (isAimingUp) ctx.rotate(-Math.PI / 2);
-
-  roundedRect(ctx, -6, -6, 32, 11, 3);
+  ctx.rotate(-0.35);
+  roundedRect(ctx, -13, -4, 28, 10, 3);
   fillAndStroke(ctx, '#dfe4ee');
   ctx.fillStyle = '#5a6278';
-  [-2, 3, 8, 13, 18].forEach((keyX) => ctx.fillRect(keyX, -3.5, 3.2, 2.6));
-  ctx.fillRect(-2, 0.5, 18, 2);
-  roundedRect(ctx, 24, -4.5, 6, 8, 2);
-  fillAndStroke(ctx, '#57e0ff');
-
-  if (flash > MUZZLE_FLASH_THRESHOLD) {
-    drawGlow(ctx, 36, -0.5, 22 * flash, '255, 232, 120', 0.95);
-    ellipse(ctx, 35, -0.5, 7 * flash, 4.5 * flash);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-  }
-
+  [-9, -4, 1, 6, 11].forEach((keyX) => ctx.fillRect(keyX - 1.5, -1.5, 3.2, 2.6));
+  ctx.fillRect(-8, 2.5, 16, 1.6);
   ctx.restore();
+};
+
+// 던지기 직전 손에 쥔 키캡
+const drawKeycapInHand = (ctx: CanvasRenderingContext2D, hand: Point) => {
+  roundedRect(ctx, hand.x - 4, hand.y - 9, 9, 9, 2.4);
+  fillAndStroke(ctx, '#f4f1ea');
 };
 
 const drawPhone = (ctx: CanvasRenderingContext2D, hand: Point) => {
@@ -343,7 +349,8 @@ const drawPhone = (ctx: CanvasRenderingContext2D, hand: Point) => {
 
 export const drawPerson = (ctx: CanvasRenderingContext2D, pose: PersonPose) => {
   const { x, y, w, h, facing, walkPhase, look, isFlashing, time } = pose;
-  const { isWalking = false, isAirborne = false, arm = 'rest', muzzleFlash = 0 } = pose;
+  const { isWalking = false, isAirborne = false, arm = 'rest', throwProgress = 0 } = pose;
+  const isThrowing = arm === 'throwForward' || arm === 'throwUp';
   const paint = (color: string) => (isFlashing ? FLASH_COLOR : color);
   const scale = h / DESIGN_HEIGHT;
 
@@ -362,7 +369,7 @@ export const drawPerson = (ctx: CanvasRenderingContext2D, pose: PersonPose) => {
   useOutline(ctx);
 
   const feet = getFeet(isWalking, isAirborne, walkPhase);
-  const hands = getHands(arm, isWalking, walkPhase);
+  const hands = getHands(arm, isWalking, walkPhase, throwProgress);
   // 걸을 때는 통통 튀고, 서 있을 때는 숨 쉬듯 살짝 움직인다
   const bodyBob = isWalking ? -Math.abs(Math.sin(walkPhase)) * 1.8 : Math.sin(time * 2.6) * 0.7;
 
@@ -371,6 +378,7 @@ export const drawPerson = (ctx: CanvasRenderingContext2D, pose: PersonPose) => {
 
   ctx.translate(0, bodyBob);
   drawArm(ctx, -10, hands.back, look, paint);
+  if (isThrowing) drawHeldKeyboard(ctx, hands.back);
 
   // 목과 몸통
   ctx.fillStyle = paint(look.skin);
@@ -397,7 +405,7 @@ export const drawPerson = (ctx: CanvasRenderingContext2D, pose: PersonPose) => {
   drawHair(ctx, look, paint);
 
   drawArm(ctx, 10, hands.front, look, paint);
-  if (arm === 'aimForward' || arm === 'aimUp') drawKeyboardBlaster(ctx, hands.front, arm === 'aimUp', muzzleFlash);
+  if (isThrowing && throwProgress < KEYCAP_VISIBLE_PROGRESS) drawKeycapInHand(ctx, hands.front);
   if (arm === 'phone') drawPhone(ctx, hands.front);
 
   ctx.restore();
