@@ -1,6 +1,7 @@
 import { GROUND_Y, VIEW_WIDTH } from '../../constants';
-import { drawPerson, type PersonLook } from '../../render/pixelPerson';
-import { drawText } from '../../render/text';
+import { drawPerson, type PersonLook } from '../../render/character';
+import { drawGlow } from '../../render/shapes';
+import { drawSpeechBubble, drawText } from '../../render/text';
 import { sfx } from '../../sfx';
 import type { Direction } from '../../types';
 import type { World } from '../../world';
@@ -31,12 +32,18 @@ import {
 type DivisionHeadState = 'march' | 'pause';
 
 export const DIVISION_HEAD_LOOK: PersonLook = {
-  skin: '#eec39c',
-  hair: '#1e1e24',
-  top: '#34406b',
-  bottom: '#23283d',
-  tie: '#c0392b',
+  skin: '#f0c49c',
+  hair: '#1e1e26',
+  top: '#3d4c8a',
+  topShade: '#2c3868',
+  bottom: '#2a3050',
+  shoe: '#1c1c24',
+  tie: '#d6453d',
   hasGlasses: true,
+  hasLanyard: false,
+  hairStyle: 'slick',
+  expression: 'stern',
+  outfit: 'suit',
 };
 
 const WIDTH = 64;
@@ -58,11 +65,14 @@ const DOCUMENT_HEIGHT = 28;
 const DEFLECT_LINES = ['의견 감사합니다', '참고하겠습니다', '그래도 갑니다'] as const;
 const DEFLECT_TEXT_INTERVAL_SECONDS = 0.7;
 const PAUSE_LINE = '(메일 확인 중…)';
+const MARCH_LABEL = '마이웨이';
+const SPEED_LINE_OFFSETS = [0.25, 0.5, 0.75] as const;
 
 export class DivisionHeadBoss implements Boss {
   readonly name = '임태희';
   readonly title = '부문장';
   readonly maxHp = MAX_HP;
+  readonly look = DIVISION_HEAD_LOOK;
   hp = MAX_HP;
   x: number;
   y = GROUND_Y - HEIGHT;
@@ -109,15 +119,11 @@ export class DivisionHeadBoss implements Boss {
     return true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, world: World) {
     const isMarching = this.state === 'march';
+    const centerX = this.x + this.w / 2;
 
-    if (isMarching) {
-      // 마이웨이 오라: 행진 중 무적임을 보여준다
-      ctx.strokeStyle = 'rgba(255, 214, 102, 0.9)';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(this.x - 6, this.y - 6, this.w + 12, this.h + 12);
-    }
+    if (isMarching) this.drawMarchAura(ctx, world.time);
 
     drawPerson(ctx, {
       x: this.x,
@@ -128,17 +134,43 @@ export class DivisionHeadBoss implements Boss {
       walkPhase: this.walkPhase,
       look: DIVISION_HEAD_LOOK,
       isFlashing: this.hitFlashTimer > 0,
+      time: world.time,
+      isWalking: isMarching,
+      arm: isMarching ? 'rest' : 'phone',
     });
     drawBossNameTag(ctx, this);
 
-    const statusLine = isMarching ? '마이웨이' : PAUSE_LINE;
-    const statusColor = isMarching ? '#ffd666' : '#9ff0ff';
-    drawText(ctx, statusLine, this.x + this.w / 2, this.y - 38, {
-      size: 15,
-      color: statusColor,
-      align: 'center',
-      outline: '#000000',
+    if (isMarching) {
+      drawText(ctx, MARCH_LABEL, centerX, this.y - 40, {
+        size: 17,
+        color: '#ffd666',
+        align: 'center',
+        outline: '#3a2a00',
+      });
+      return;
+    }
+
+    drawSpeechBubble(ctx, PAUSE_LINE, centerX, this.y - 30);
+  }
+
+  // 마이웨이 오라: 행진 중 무적임을 금빛 광채와 속도선으로 보여준다
+  private drawMarchAura(ctx: CanvasRenderingContext2D, time: number) {
+    const centerX = this.x + this.w / 2;
+    const centerY = this.y + this.h / 2;
+    const pulse = 0.5 + Math.sin(time * 10) * 0.12;
+    drawGlow(ctx, centerX, centerY, this.h * 0.95, '255, 214, 102', pulse);
+
+    ctx.strokeStyle = 'rgba(255, 236, 170, 0.8)';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    SPEED_LINE_OFFSETS.forEach((offset, index) => {
+      const lineY = this.y + this.h * offset;
+      const tailX = centerX - this.direction * (this.w * 0.7 + index * 8);
+      ctx.moveTo(tailX, lineY);
+      ctx.lineTo(tailX - this.direction * (26 + index * 10), lineY);
     });
+    ctx.stroke();
   }
 
   private updateMarch(world: World, dt: number) {

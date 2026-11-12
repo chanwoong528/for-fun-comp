@@ -1,3 +1,4 @@
+import type { PersonLook } from '../../render/character';
 import { drawNameTag } from '../../render/text';
 import type { Rect } from '../../types';
 import type { World } from '../../world';
@@ -8,6 +9,7 @@ export interface Boss extends Rect {
   readonly name: string;
   readonly title: string;
   readonly maxHp: number;
+  readonly look: PersonLook;
   hp: number;
   update(world: World, dt: number): void;
   draw(ctx: CanvasRenderingContext2D, world: World): void;
@@ -24,5 +26,5 @@ const SECOND_PHASE_HP_RATIO = 0.5;
 export const isInSecondPhase = (boss: Boss) => boss.hp <= boss.maxHp * SECOND_PHASE_HP_RATIO;
 
 export const drawBossNameTag = (ctx: CanvasRenderingContext2D, boss: Boss) => {
-  drawNameTag(ctx, `${boss.name} ${boss.title}`, boss.x + boss.w / 2, boss.y - 14);
+  drawNameTag(ctx, `${boss.name} ${boss.title}`, boss.x + boss.w / 2, boss.y - 16);
 };

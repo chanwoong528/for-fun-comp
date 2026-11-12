@@ -1,5 +1,6 @@
 import { GROUND_Y, VIEW_WIDTH } from '../../constants';
-import { drawPerson, type PersonLook } from '../../render/pixelPerson';
+import { drawPerson, type PersonLook } from '../../render/character';
+import { fillAndStroke, OUTLINE_COLOR, roundedRect, verticalGradient } from '../../render/shapes';
 import { drawText } from '../../render/text';
 import { sfx } from '../../sfx';
 import type { Rect } from '../../types';
@@ -33,12 +34,18 @@ type StampPhase = 'warning' | 'falling' | 'landed';
 type Stamp = Rect & { phase: StampPhase; timer: number };
 
 export const EXECUTIVE_LOOK: PersonLook = {
-  skin: '#e9bd95',
-  hair: '#8d8d96',
-  top: '#1f2430',
-  bottom: '#1f2430',
-  tie: '#b8902f',
+  skin: '#ecc09a',
+  hair: '#a9a9b4',
+  top: '#2b3142',
+  topShade: '#1d2230',
+  bottom: '#2b3142',
+  shoe: '#15151c',
+  tie: '#d9b45a',
   hasGlasses: false,
+  hasLanyard: false,
+  hairStyle: 'thin',
+  expression: 'frown',
+  outfit: 'suit',
 };
 
 const WIDTH = 130;
@@ -81,6 +88,7 @@ export class ExecutiveBoss implements Boss {
   readonly name = '곽동훈';
   readonly title = '전무';
   readonly maxHp = MAX_HP;
+  readonly look = EXECUTIVE_LOOK;
   hp = MAX_HP;
   x: number;
   y = GROUND_Y - HEIGHT;
@@ -131,7 +139,7 @@ export class ExecutiveBoss implements Boss {
     return true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, world: World) {
     const isFlashing = this.hitFlashTimer > 0;
 
     drawPerson(ctx, {
@@ -143,20 +151,34 @@ export class ExecutiveBoss implements Boss {
       walkPhase: 0,
       look: EXECUTIVE_LOOK,
       isFlashing,
+      time: world.time,
     });
 
-    // 책상과 명패
-    const deskY = this.y + this.h - DESK_HEIGHT;
-    ctx.fillStyle = isFlashing ? '#ffffff' : '#6b4226';
-    ctx.fillRect(this.x, deskY, this.w, DESK_HEIGHT);
-    ctx.fillStyle = isFlashing ? '#ffffff' : '#4f2f19';
-    ctx.fillRect(this.x, deskY, this.w, 8);
-    ctx.fillStyle = '#d9b45a';
-    ctx.fillRect(this.x + 14, deskY + 18, 60, 22);
-    drawText(ctx, this.title, this.x + 44, deskY + 30, { size: 13, color: '#3a2a10', align: 'center' });
-
+    this.drawDesk(ctx, isFlashing);
     drawBossNameTag(ctx, this);
     this.stamps.forEach((stamp) => this.drawStamp(ctx, stamp));
+  }
+
+  private drawDesk(ctx: CanvasRenderingContext2D, isFlashing: boolean) {
+    const deskY = this.y + this.h - DESK_HEIGHT;
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = OUTLINE_COLOR;
+
+    roundedRect(ctx, this.x + 4, deskY + 8, this.w - 8, DESK_HEIGHT - 8, 3);
+    fillAndStroke(ctx, isFlashing ? '#ffffff' : verticalGradient(ctx, deskY, deskY + DESK_HEIGHT, '#8a5a34', '#5a3519'));
+    roundedRect(ctx, this.x - 4, deskY, this.w + 8, 12, 4);
+    fillAndStroke(ctx, isFlashing ? '#ffffff' : '#a8733f');
+
+    // 서류 더미와 금색 명패
+    ctx.lineWidth = 1.6;
+    [0, 1, 2].forEach((sheetIndex) => {
+      roundedRect(ctx, this.x + this.w - 44, deskY - 6 - sheetIndex * 4, 34, 5, 1);
+      fillAndStroke(ctx, '#f6f6f6');
+    });
+    roundedRect(ctx, this.x + 14, deskY + 22, 62, 22, 3);
+    fillAndStroke(ctx, verticalGradient(ctx, deskY + 22, deskY + 44, '#f0d27a', '#b8902f'));
+    drawText(ctx, this.title, this.x + 45, deskY + 34, { size: 13, color: '#3a2a10', align: 'center' });
   }
 
   private enterIdle() {
@@ -274,19 +296,27 @@ export class ExecutiveBoss implements Boss {
   }
 
   private drawStamp(ctx: CanvasRenderingContext2D, stamp: Stamp) {
+    const centerX = stamp.x + stamp.w / 2;
+
     if (stamp.phase === 'warning') {
       const isBlinkOn = Math.floor(stamp.timer * 12) % 2 === 0;
-      ctx.fillStyle = isBlinkOn ? 'rgba(255, 80, 80, 0.55)' : 'rgba(255, 80, 80, 0.25)';
-      ctx.fillRect(stamp.x, GROUND_Y - 6, stamp.w, 6);
-      drawText(ctx, '▼', stamp.x + stamp.w / 2, GROUND_Y - 24, { size: 18, color: '#ff6b6b', align: 'center' });
+      ctx.fillStyle = isBlinkOn ? 'rgba(255, 80, 80, 0.6)' : 'rgba(255, 80, 80, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(centerX, GROUND_Y, stamp.w / 2, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      drawText(ctx, '▼', centerX, GROUND_Y - 26, { size: 20, color: '#ff6b6b', align: 'center', outline: '#3a0a12' });
       return;
     }
 
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = OUTLINE_COLOR;
+
     // 도장 손잡이와 인면
-    ctx.fillStyle = '#7a4a2a';
-    ctx.fillRect(stamp.x + stamp.w * 0.3, stamp.y, stamp.w * 0.4, stamp.h * 0.5);
-    ctx.fillStyle = '#c0392b';
-    ctx.fillRect(stamp.x, stamp.y + stamp.h * 0.5, stamp.w, stamp.h * 0.5);
-    drawText(ctx, '반려', stamp.x + stamp.w / 2, stamp.y + stamp.h * 0.75, { size: 18, align: 'center' });
+    roundedRect(ctx, centerX - 13, stamp.y, 26, stamp.h * 0.55, 8);
+    fillAndStroke(ctx, verticalGradient(ctx, stamp.y, stamp.y + stamp.h * 0.55, '#b07a4a', '#6e4322'));
+    roundedRect(ctx, stamp.x, stamp.y + stamp.h * 0.5, stamp.w, stamp.h * 0.5, 6);
+    fillAndStroke(ctx, verticalGradient(ctx, stamp.y + stamp.h * 0.5, stamp.y + stamp.h, '#f0554a', '#b3261e'));
+    drawText(ctx, '반려', centerX, stamp.y + stamp.h * 0.76, { size: 20, align: 'center', outline: '#7a120c' });
   }
 }

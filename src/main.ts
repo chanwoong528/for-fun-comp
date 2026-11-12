@@ -17,6 +17,11 @@ const readStartOptions = () => {
   };
 };
 
+// 캔버스는 글꼴을 스스로 불러오지 않으므로 웹폰트를 미리 요청해 둔다 (실패하면 시스템 글꼴로 그린다)
+const WEB_FONTS = ["16px 'Jua'", "16px 'Black Han Sans'"];
+const FONT_PRELOAD_TEXT = '칼퇴 작전 한결일보 편 Enter 를 눌러 출근하기';
+WEB_FONTS.forEach((font) => void document.fonts.load(font, FONT_PRELOAD_TEXT));
+
 const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
 
 if (canvas) {

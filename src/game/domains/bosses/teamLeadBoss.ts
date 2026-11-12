@@ -1,6 +1,6 @@
 import { GROUND_Y, VIEW_WIDTH } from '../../constants';
-import { drawPerson, type PersonLook } from '../../render/pixelPerson';
-import { drawText } from '../../render/text';
+import { drawPerson, type PersonLook } from '../../render/character';
+import { drawSpeechBubble } from '../../render/text';
 import type { Direction } from '../../types';
 import type { World } from '../../world';
 import {
@@ -27,12 +27,18 @@ import {
 type TeamLeadState = 'idle' | 'talk' | 'wave' | 'telegraph' | 'approach';
 
 export const TEAM_LEAD_LOOK: PersonLook = {
-  skin: '#f0c49a',
-  hair: '#3a2d26',
-  top: '#6fa37a',
-  bottom: '#3b3f4f',
+  skin: '#f5c9a0',
+  hair: '#4a3628',
+  top: '#7fbf8e',
+  topShade: '#5c9c6c',
+  bottom: '#4a4f66',
+  shoe: '#5a4636',
   tie: null,
   hasGlasses: false,
+  hasLanyard: true,
+  hairStyle: 'parted',
+  expression: 'smile',
+  outfit: 'knit',
 };
 
 const WIDTH = 56;
@@ -68,6 +74,7 @@ export class TeamLeadBoss implements Boss {
   readonly name = '우종석';
   readonly title = '팀장';
   readonly maxHp = MAX_HP;
+  readonly look = TEAM_LEAD_LOOK;
   hp = MAX_HP;
   x: number;
   y = GROUND_Y - HEIGHT;
@@ -125,7 +132,9 @@ export class TeamLeadBoss implements Boss {
     return true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, world: World) {
+    const isTalking = this.state === 'talk' || this.state === 'wave' || this.state === 'telegraph';
+
     drawPerson(ctx, {
       x: this.x,
       y: this.y,
@@ -135,16 +144,18 @@ export class TeamLeadBoss implements Boss {
       walkPhase: this.walkPhase,
       look: TEAM_LEAD_LOOK,
       isFlashing: this.hitFlashTimer > 0,
+      time: world.time,
+      isWalking: this.state === 'approach',
+      arm: isTalking ? 'gesture' : 'rest',
     });
     drawBossNameTag(ctx, this);
 
     if (this.state !== 'telegraph') return;
 
-    drawText(ctx, TELEGRAPH_LINE, this.x + this.w / 2, this.y - 40, {
-      size: 16,
-      color: '#ffe3f0',
-      align: 'center',
-      outline: '#7a2950',
+    drawSpeechBubble(ctx, TELEGRAPH_LINE, this.x + this.w / 2, this.y - 30, {
+      fill: '#fff0f6',
+      text: '#a0336a',
+      border: '#d9659b',
     });
   }
 

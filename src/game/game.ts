@@ -33,6 +33,8 @@ export const startGame = (canvas: HTMLCanvasElement, pixelRatio: number, options
   const input = createKeyboardInput(window);
   const session: Session = { scene: 'title', sceneTimer: 0, world: createWorld(0, false) };
   let previousTime = performance.now();
+  // 타이틀·연출 화면의 애니메이션에 쓰는 누적 시간(초)
+  let clock = 0;
 
   const enterStage = (stageIndex: number, shouldSkipToBoss: boolean) => {
     session.world = createWorld(stageIndex, shouldSkipToBoss);
@@ -126,26 +128,27 @@ export const startGame = (canvas: HTMLCanvasElement, pixelRatio: number, options
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
     if (session.scene === 'title') {
-      drawTitleScreen(ctx);
+      drawTitleScreen(ctx, clock);
       return;
     }
 
     if (session.scene === 'ending') {
-      drawEnding(ctx);
+      drawEnding(ctx, clock);
       return;
     }
 
     renderWorld(ctx, session.world);
 
     if (session.scene === 'stageIntro') drawStageIntro(ctx, session.world);
-    if (session.scene === 'bossIntro') drawBossIntro(ctx, session.world);
-    if (session.scene === 'bossDefeated') drawBossDefeated(ctx, session.world);
-    if (session.scene === 'gameOver') drawGameOver(ctx);
+    if (session.scene === 'bossIntro') drawBossIntro(ctx, session.world, clock);
+    if (session.scene === 'bossDefeated') drawBossDefeated(ctx, session.world, clock);
+    if (session.scene === 'gameOver') drawGameOver(ctx, clock);
   };
 
   const onFrame = (currentTime: number) => {
     const dt = Math.min(MAX_FRAME_SECONDS, (currentTime - previousTime) / 1000);
     previousTime = currentTime;
+    clock += dt;
 
     update(dt);
     render();

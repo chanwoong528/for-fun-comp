@@ -9,12 +9,22 @@ import type { Rect } from './types';
 export type SpawnPoint = { x: number; kind: EnemyKind };
 export type StageDeco = 'office' | 'meeting' | 'executive';
 
+export type StageCelestial = 'day' | 'sunset' | 'night';
+
 export type StageTheme = {
-  wall: string;
-  wallAccent: string;
-  floor: string;
-  floorLine: string;
+  wallTop: string;
+  wallBottom: string;
+  wainscot: string;
+  trim: string;
+  floorTop: string;
+  floorBottom: string;
   platform: string;
+  platformShade: string;
+  skyTop: string;
+  skyBottom: string;
+  building: string;
+  buildingLight: string;
+  celestial: StageCelestial;
   deco: StageDeco;
 };
 
@@ -51,11 +61,19 @@ export const STAGES: StageDefinition[] = [
     subtitle: '버그와 티켓을 뚫고 팀장님 자리까지',
     length: STAGE_1_LENGTH,
     theme: {
-      wall: '#27324a',
-      wallAccent: '#33415f',
-      floor: '#4a5068',
-      floorLine: '#3b4057',
-      platform: '#8a6a4a',
+      wallTop: '#3f5079',
+      wallBottom: '#2b3757',
+      wainscot: '#242d49',
+      trim: '#5f73a8',
+      floorTop: '#5d6789',
+      floorBottom: '#2c3148',
+      platform: '#c9925a',
+      platformShade: '#8a5a30',
+      skyTop: '#4ea8ff',
+      skyBottom: '#d6efff',
+      building: '#7c9cc4',
+      buildingLight: '#eaf6ff',
+      celestial: 'day',
       deco: 'office',
     },
     platforms: [platformAt(900), platformAt(1500), platformAt(2150)],
@@ -83,11 +101,19 @@ export const STAGES: StageDefinition[] = [
     subtitle: '쏟아지는 회의 초대를 지나 부문장님 앞으로',
     length: STAGE_2_LENGTH,
     theme: {
-      wall: '#3a2f4a',
-      wallAccent: '#4a3c5f',
-      floor: '#5a5068',
-      floorLine: '#483f55',
-      platform: '#7a7f95',
+      wallTop: '#5e4776',
+      wallBottom: '#3c2d52',
+      wainscot: '#2f2343',
+      trim: '#8b6fb0',
+      floorTop: '#6f5d84',
+      floorBottom: '#32273e',
+      platform: '#a4acc8',
+      platformShade: '#666d88',
+      skyTop: '#ff7a59',
+      skyBottom: '#ffd89c',
+      building: '#5b3552',
+      buildingLight: '#ffe9a8',
+      celestial: 'sunset',
       deco: 'meeting',
     },
     platforms: [
@@ -124,11 +150,19 @@ export const STAGES: StageDefinition[] = [
     subtitle: '마지막 결재만 받으면 칼퇴다',
     length: STAGE_3_LENGTH,
     theme: {
-      wall: '#3d2c22',
-      wallAccent: '#503a2c',
-      floor: '#6a2f2f',
-      floorLine: '#572626',
-      platform: '#b8902f',
+      wallTop: '#5c3f2d',
+      wallBottom: '#38251a',
+      wainscot: '#2b1c13',
+      trim: '#c79a35',
+      floorTop: '#8e3c3c',
+      floorBottom: '#3b1717',
+      platform: '#e0bb62',
+      platformShade: '#9a7826',
+      skyTop: '#0b1230',
+      skyBottom: '#2c3d7c',
+      building: '#090e22',
+      buildingLight: '#ffd76a',
+      celestial: 'night',
       deco: 'executive',
     },
     platforms: [platformAt(850), platformAt(1600), platformAt(2300)],

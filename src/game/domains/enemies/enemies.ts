@@ -1,7 +1,7 @@
 import { GROUND_Y, VIEW_WIDTH } from '../../constants';
-import { drawText } from '../../render/text';
+import { ellipse, fillAndStroke, heartPath, OUTLINE_COLOR, roundedRect } from '../../render/shapes';
 import { sfx } from '../../sfx';
-import type { Rect } from '../../types';
+import type { Direction, Rect } from '../../types';
 import type { World } from '../../world';
 import {
   aimVelocity,
@@ -22,13 +22,13 @@ export type Enemy = Rect & {
   shootTimer: number;
 };
 
-type EnemySpec = { w: number; h: number; hp: number; startY: number; color: string; label: string };
+type EnemySpec = { w: number; h: number; hp: number; startY: number; color: string };
 
 const ENEMY_SPECS: Record<EnemyKind, EnemySpec> = {
-  bug: { w: 38, h: 30, hp: 2, startY: GROUND_Y - 30, color: '#5fbf4a', label: 'BUG' },
-  ticket: { w: 44, h: 30, hp: 1, startY: 250, color: '#3b82f6', label: 'JIRA' },
-  alarm: { w: 36, h: 44, hp: 3, startY: GROUND_Y - 44, color: '#e5484d', label: '마감' },
-  invite: { w: 44, h: 30, hp: 2, startY: 110, color: '#9b6bff', label: '회의' },
+  bug: { w: 38, h: 30, hp: 2, startY: GROUND_Y - 30, color: '#5fbf4a' },
+  ticket: { w: 44, h: 30, hp: 1, startY: 250, color: '#3b82f6' },
+  alarm: { w: 36, h: 44, hp: 3, startY: GROUND_Y - 44, color: '#e5484d' },
+  invite: { w: 44, h: 30, hp: 2, startY: 110, color: '#9b6bff' },
 };
 
 const CONTACT_DAMAGE = 1;
@@ -44,6 +44,7 @@ const INVITE_SPEED = 110;
 const ALARM_SHOOT_INTERVAL_SECONDS = 2;
 const ALARM_BULLET_SPEED = 230;
 const ALARM_BULLET_SIZE = 18;
+const ALARM_WARNING_SECONDS = 0.4;
 
 export const createEnemy = (kind: EnemyKind, x: number): Enemy => {
   const spec = ENEMY_SPECS[kind];
@@ -139,31 +140,141 @@ export const updateEnemies = (world: World, dt: number) => {
   world.enemies = world.enemies.filter((enemy) => enemy.x + enemy.w > world.cameraX - DESPAWN_MARGIN);
 };
 
-export const drawEnemy = (ctx: CanvasRenderingContext2D, enemy: Enemy) => {
-  const spec = ENEMY_SPECS[enemy.kind];
-  const { x, y, w, h } = enemy;
+const drawWings = (ctx: CanvasRenderingContext2D, age: number) => {
+  const flap = Math.sin(age * 22) * 0.45;
 
-  ctx.fillStyle = spec.color;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-  ctx.fillRect(x, y + h - 5, w, 5);
+  [-1, 1].forEach((side) => {
+    ctx.save();
+    ctx.translate(side * 13, -11);
+    ctx.rotate(side * (0.5 + flap));
+    ellipse(ctx, side * 9, 0, 11, 5);
+    fillAndStroke(ctx, '#ffffff');
+    ctx.restore();
+  });
+};
 
-  if (enemy.kind === 'bug') {
-    // 벌레 다리가 꼼지락거린다
-    const legLift = Math.sin(enemy.age * 16) * 3;
-    ctx.fillStyle = '#2f6b25';
-    ctx.fillRect(x - 5, y + 8 + legLift, 5, 4);
-    ctx.fillRect(x - 5, y + 20 - legLift, 5, 4);
-    ctx.fillRect(x + w, y + 8 - legLift, 5, 4);
-    ctx.fillRect(x + w, y + 20 + legLift, 5, 4);
-  }
+const drawBug = (ctx: CanvasRenderingContext2D, enemy: Enemy) => {
+  // 꼼지락거리는 다리
+  ctx.beginPath();
+  [-1, 0, 1].forEach((legIndex) => {
+    const wiggle = Math.sin(enemy.age * 18 + legIndex * 2) * 3;
+    ctx.moveTo(legIndex * 9 + 2, 6);
+    ctx.lineTo(legIndex * 9 - 3 + wiggle, 15);
+  });
+  ctx.stroke();
 
-  if (enemy.kind === 'alarm') {
-    // 알람 시계의 종
-    ctx.fillStyle = '#ffd27d';
-    ctx.fillRect(x + 2, y - 6, 10, 6);
-    ctx.fillRect(x + w - 12, y - 6, 10, 6);
-  }
+  ellipse(ctx, 3, 0, 16, 12);
+  fillAndStroke(ctx, '#6fd35a');
+  ctx.fillStyle = '#3f9b34';
+  [[7, -4, 3], [11, 4, 2.4], [-1, 3, 2.6]].forEach(([spotX, spotY, radius]) => {
+    ellipse(ctx, spotX, spotY, radius, radius);
+    ctx.fill();
+  });
 
-  drawText(ctx, spec.label, x + w / 2, y + h / 2, { size: 12, align: 'center' });
+  // 더듬이와 머리
+  ctx.beginPath();
+  ctx.moveTo(-15, -3);
+  ctx.quadraticCurveTo(-19, -10, -23, -12);
+  ctx.moveTo(-11, -4);
+  ctx.quadraticCurveTo(-12, -12, -15, -15);
+  ctx.stroke();
+  ellipse(ctx, -13, 3, 8.5, 8.5);
+  fillAndStroke(ctx, '#3f9b34');
+  ellipse(ctx, -15.5, 1.5, 3.6, 3.6);
+  fillAndStroke(ctx, '#ffffff');
+  ellipse(ctx, -16.6, 1.8, 1.6, 1.6);
+  ctx.fillStyle = OUTLINE_COLOR;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-20, -4);
+  ctx.lineTo(-12, -2.5);
+  ctx.stroke();
+};
+
+const drawTicket = (ctx: CanvasRenderingContext2D, enemy: Enemy) => {
+  drawWings(ctx, enemy.age);
+  ctx.rotate(Math.sin(enemy.age * 3) * 0.08);
+
+  roundedRect(ctx, -20, -13, 40, 26, 5);
+  fillAndStroke(ctx, '#4c8dff');
+  ctx.fillStyle = '#2f6fe0';
+  ctx.beginPath();
+  ctx.roundRect(-19, -12, 38, 8, [4, 4, 0, 0]);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-15, -1, 7, 7);
+  ctx.fillRect(-5, 0, 19, 2.4);
+  ctx.fillRect(-5, 5, 12, 2.4);
+  ctx.strokeStyle = '#2f6fe0';
+  ctx.beginPath();
+  ctx.moveTo(-13.5, 2.5);
+  ctx.lineTo(-11.8, 4.4);
+  ctx.lineTo(-9.4, 0.6);
+  ctx.stroke();
+};
+
+const drawAlarm = (ctx: CanvasRenderingContext2D, enemy: Enemy) => {
+  const isAboutToShoot = enemy.shootTimer < ALARM_WARNING_SECONDS;
+  if (isAboutToShoot) ctx.translate(Math.sin(enemy.age * 70) * 2, 0);
+
+  // 다리와 종
+  ctx.beginPath();
+  ctx.moveTo(-9, 15);
+  ctx.lineTo(-13, 22);
+  ctx.moveTo(9, 15);
+  ctx.lineTo(13, 22);
+  ctx.stroke();
+  [-1, 1].forEach((side) => {
+    ctx.beginPath();
+    ctx.ellipse(side * 11, -13, 8, 7, side * 0.5, Math.PI, Math.PI * 2);
+    ctx.closePath();
+    fillAndStroke(ctx, '#ffcf5a');
+  });
+
+  ellipse(ctx, 0, 3, 17, 17);
+  fillAndStroke(ctx, isAboutToShoot ? '#ff6b6b' : '#e5484d');
+  ellipse(ctx, 0, 3, 11.5, 11.5);
+  fillAndStroke(ctx, '#fff8ec');
+
+  // 시곗바늘: 마감 직전을 가리킨다
+  ctx.beginPath();
+  ctx.moveTo(0, 3);
+  ctx.lineTo(0, -5);
+  ctx.moveTo(0, 3);
+  ctx.lineTo(-5, 0);
+  ctx.stroke();
+};
+
+const drawInvite = (ctx: CanvasRenderingContext2D, enemy: Enemy) => {
+  drawWings(ctx, enemy.age);
+
+  roundedRect(ctx, -20, -13, 40, 26, 4);
+  fillAndStroke(ctx, '#b99cff');
+  ctx.beginPath();
+  ctx.moveTo(-20, -11);
+  ctx.lineTo(0, 4);
+  ctx.lineTo(20, -11);
+  ctx.stroke();
+  heartPath(ctx, 0, 3, 4.5);
+  fillAndStroke(ctx, '#ff5a7a');
+};
+
+const ENEMY_DRAWERS: Record<EnemyKind, (ctx: CanvasRenderingContext2D, enemy: Enemy) => void> = {
+  bug: drawBug,
+  ticket: drawTicket,
+  alarm: drawAlarm,
+  invite: drawInvite,
+};
+
+// 적은 왼쪽을 바라보는 모양으로 그리고, 플레이어가 오른쪽에 있으면 뒤집는다
+export const drawEnemy = (ctx: CanvasRenderingContext2D, enemy: Enemy, facing: Direction) => {
+  ctx.save();
+  ctx.translate(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2);
+  ctx.scale(-facing, 1);
+  ctx.lineWidth = 2.2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = OUTLINE_COLOR;
+  ENEMY_DRAWERS[enemy.kind](ctx, enemy);
+  ctx.restore();
 };

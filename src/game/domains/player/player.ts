@@ -1,6 +1,6 @@
 import { GRAVITY, GROUND_Y, VIEW_WIDTH } from '../../constants';
 import type { Input } from '../../input';
-import { drawPerson, type PersonLook } from '../../render/pixelPerson';
+import { drawPerson, type PersonLook } from '../../render/character';
 import { drawNameTag } from '../../render/text';
 import { sfx } from '../../sfx';
 import type { Direction, Rect } from '../../types';
@@ -27,12 +27,18 @@ export const PLAYER_MAX_HP = 6;
 export const PLAYER_BULLET_DAMAGE = 1;
 
 export const PLAYER_LOOK: PersonLook = {
-  skin: '#f2c9a0',
-  hair: '#22222a',
-  top: '#2f7de1',
-  bottom: '#2b2f45',
+  skin: '#f7cfa8',
+  hair: '#2a2430',
+  top: '#3d8bf2',
+  topShade: '#2a6bc9',
+  bottom: '#343a55',
+  shoe: '#f4f4f4',
   tie: null,
   hasGlasses: true,
+  hasLanyard: true,
+  hairStyle: 'short',
+  expression: 'determined',
+  outfit: 'hoodie',
 };
 
 const PLAYER_WIDTH = 34;
@@ -183,24 +189,25 @@ export const healPlayer = (world: World, amount: number) => {
   spawnBurst(world, player.x + player.w / 2, player.y, '#ffd27d', 6);
 };
 
-const drawKeyboardGun = (ctx: CanvasRenderingContext2D, player: Player) => {
-  ctx.fillStyle = '#c9ced8';
-
-  if (player.isAimingUp) {
-    ctx.fillRect(player.x + player.w / 2 - 5, player.y - 12, 10, 22);
-    return;
-  }
-
-  const gunX = player.facing === 1 ? player.x + player.w - 6 : player.x - 16;
-  ctx.fillRect(gunX, player.y + player.h * 0.42, 22, 9);
-};
-
-export const drawPlayer = (ctx: CanvasRenderingContext2D, player: Player) => {
+export const drawPlayer = (ctx: CanvasRenderingContext2D, player: Player, time: number) => {
   const isBlinkedOut =
     player.invulnerableTimer > 0 && Math.floor(player.invulnerableTimer / BLINK_INTERVAL_SECONDS) % 2 === 0;
   if (isBlinkedOut) return;
 
-  drawPerson(ctx, { ...player, look: PLAYER_LOOK, isFlashing: false });
-  drawKeyboardGun(ctx, player);
-  drawNameTag(ctx, PLAYER_NAME, player.x + player.w / 2, player.y - 12);
+  drawPerson(ctx, {
+    x: player.x,
+    y: player.y,
+    w: player.w,
+    h: player.h,
+    facing: player.facing,
+    walkPhase: player.walkPhase,
+    look: PLAYER_LOOK,
+    isFlashing: false,
+    time,
+    isWalking: player.vx !== 0 && player.isOnGround,
+    isAirborne: !player.isOnGround,
+    arm: player.isAimingUp ? 'aimUp' : 'aimForward',
+    muzzleFlash: player.shootCooldown / SHOOT_INTERVAL_SECONDS,
+  });
+  drawNameTag(ctx, PLAYER_NAME, player.x + player.w / 2, player.y - 16);
 };
