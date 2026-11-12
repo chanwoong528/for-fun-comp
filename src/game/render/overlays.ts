@@ -13,9 +13,9 @@ const DIALOG_MARGIN = 40;
 
 const CAST: Array<{ label: string; look: PersonLook }> = [
   { label: PLAYER_NAME, look: PLAYER_LOOK },
-  { label: '요쥰씩 팀장', look: TEAM_LEAD_LOOK },
-  { label: '으탹히 부문장', look: DIVISION_HEAD_LOOK },
-  { label: '궝둉횽 전무', look: EXECUTIVE_LOOK },
+  { label: '우종석 팀장', look: TEAM_LEAD_LOOK },
+  { label: '임태희 부문장', look: DIVISION_HEAD_LOOK },
+  { label: '곽동훈 전무', look: EXECUTIVE_LOOK },
 ];
 const CAST_SPACING = 170;
 const CAST_WIDTH = 44;
@@ -51,7 +51,7 @@ export const drawTitleScreen = (ctx: CanvasRenderingContext2D) => {
   ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
   drawText(ctx, '칼퇴 작전', CENTER_X, 110, { size: 64, color: '#ffe066', align: 'center', outline: '#7a4a00' });
-  drawText(ctx, '— 한귝일보 편 —', CENTER_X, 170, { size: 22, align: 'center' });
+  drawText(ctx, '— 한결일보 편 —', CENTER_X, 170, { size: 22, align: 'center' });
   drawCast(ctx);
   drawText(ctx, '←→ 이동   ↑ 위로 조준   Space 점프   Z 발사   X 핫픽스 배포', CENTER_X, 420, {
     size: 16,

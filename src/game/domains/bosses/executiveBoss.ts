@@ -24,7 +24,7 @@ import {
   type Boss,
 } from './boss';
 
-// 궝둉횽 전무: 책상 뒤에서 결재 반려 도장을 떨어뜨리고 서류를 뿌린다.
+// 곽동훈 전무: 책상 뒤에서 결재 반려 도장을 떨어뜨리고 서류를 뿌린다.
 // 체력이 절반 이하가 되면 "전사 긴급 회의"로 회의 초대장을 소환한다.
 
 type ExecutiveState = 'idle' | 'stamps' | 'documents' | 'meeting';
@@ -78,7 +78,7 @@ const MEETING_SECONDS = 1.5;
 const MEETING_LINE = '전사 긴급 회의 소집!';
 
 export class ExecutiveBoss implements Boss {
-  readonly name = '궝둉횽';
+  readonly name = '곽동훈';
   readonly title = '전무';
   readonly maxHp = MAX_HP;
   hp = MAX_HP;

@@ -21,7 +21,7 @@ import {
   type Boss,
 } from './boss';
 
-// 요쥰씩 팀장: 유한 대화로 맘 돌리기.
+// 우종석 팀장: 유한 대화로 맘 돌리기.
 // 말풍선과 공감 파동에 맞으면 피해는 없지만 "설득당함" 상태가 되어 좌우 조작이 반전된다.
 
 type TeamLeadState = 'idle' | 'talk' | 'wave' | 'telegraph' | 'approach';
@@ -44,7 +44,7 @@ const PATTERN_ORDER = ['talk', 'wave', 'telegraph'] as const;
 const IDLE_SECONDS = 1.1;
 const SECOND_PHASE_IDLE_SECONDS = 0.6;
 
-const PERSUASION_LINES = ['해보면 어때요~?', '좋게 갑시다~', '쳔웅씨 말도 맞는데~', '일단 해보죠~'] as const;
+const PERSUASION_LINES = ['해보면 어때요~?', '좋게 갑시다~', '창우씨 말도 맞는데~', '일단 해보죠~'] as const;
 const BUBBLE_COUNT = 4;
 const SECOND_PHASE_BUBBLE_COUNT = 6;
 const BUBBLE_INTERVAL_SECONDS = 0.65;
@@ -65,7 +65,7 @@ const TELEGRAPH_LINE = '잠깐 얘기 좀 할까요~?';
 const APPROACH_SPEED = 380;
 
 export class TeamLeadBoss implements Boss {
-  readonly name = '요쥰씩';
+  readonly name = '우종석';
   readonly title = '팀장';
   readonly maxHp = MAX_HP;
   hp = MAX_HP;

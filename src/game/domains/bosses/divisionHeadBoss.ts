@@ -24,7 +24,7 @@ import {
   type DamageSource,
 } from './boss';
 
-// 으탹히 부문장: 뭐라하든 내 갈 길을 간다.
+// 임태희 부문장: 뭐라하든 내 갈 길을 간다.
 // 행진 중에는 총알(의견)이 전부 튕겨 나간다. 잠시 멈춰 메일을 확인할 때만 공격이 통한다.
 // 행진은 점프로 넘거나 발판 위로 피한다. 핫픽스는 행진 중에도 통한다.
 
@@ -60,7 +60,7 @@ const DEFLECT_TEXT_INTERVAL_SECONDS = 0.7;
 const PAUSE_LINE = '(메일 확인 중…)';
 
 export class DivisionHeadBoss implements Boss {
-  readonly name = '으탹히';
+  readonly name = '임태희';
   readonly title = '부문장';
   readonly maxHp = MAX_HP;
   hp = MAX_HP;

@@ -22,7 +22,7 @@ export type Player = Rect & {
   walkPhase: number;
 };
 
-export const PLAYER_NAME = '뮨쳔웅';
+export const PLAYER_NAME = '민창우';
 export const PLAYER_MAX_HP = 6;
 export const PLAYER_BULLET_DAMAGE = 1;
 

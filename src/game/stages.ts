@@ -74,8 +74,8 @@ export const STAGES: StageDefinition[] = [
       [2580, 'bug'],
     ]),
     createBoss: (arenaLeft) => new TeamLeadBoss(arenaLeft),
-    bossIntroLine: '쳔웅씨, 잠깐 얘기 좀 할까요~? 좋게좋게 갑시다~',
-    bossDefeatLine: '…그래요, 쳔웅씨 말대로 합시다. 오늘은 퇴근하세요!',
+    bossIntroLine: '창우씨, 잠깐 얘기 좀 할까요~? 좋게좋게 갑시다~',
+    bossDefeatLine: '…그래요, 창우씨 말대로 합시다. 오늘은 퇴근하세요!',
     clearStampText: '퇴근 승인',
   },
   {
@@ -116,7 +116,7 @@ export const STAGES: StageDefinition[] = [
     ]),
     createBoss: (arenaLeft) => new DivisionHeadBoss(arenaLeft),
     bossIntroLine: '의견은 잘 들었습니다. 그래도 저는 제 갈 길을 갑니다.',
-    bossDefeatLine: '…좋습니다. 이번에는 쳔웅씨 방향으로 가보죠.',
+    bossDefeatLine: '…좋습니다. 이번에는 창우씨 방향으로 가보죠.',
     clearStampText: '방향 수용',
   },
   {
